@@ -24,16 +24,16 @@ def run_make_setup_full():
     original_dir = os.getcwd()
 
     # Ensure submodules are updated before running the Makefile
-    update_submodules()
+    # update_submodules()
 
     # Ensure the Makefile uses the current Python interpreter
     env = os.environ.copy()
     env["PYTHON"] = sys.executable
-    print(f"Running 'make setup-full' in {vortex_dir} with PYTHON={sys.executable} ...")
+    # print(f"Running 'make setup-full' in {vortex_dir} with PYTHON={sys.executable} ...")
     
     try:
         os.chdir(vortex_dir)
-        subprocess.check_call(['make', 'setup-full'], env=env)
+        # subprocess.check_call(['make', 'setup-full'], env=env)
     finally:
         os.chdir(original_dir)
 
@@ -48,8 +48,8 @@ class CustomBuild(_build):
 
 class CustomDevelop(_develop):
     def run(self):
-        update_submodules()
-        run_make_setup_full()
+        # update_submodules()
+        run_make_setup_full()  # Commented out - vortex already built in container
         _develop.run(self)
 
 class CustomBDistWheel(_bdist_wheel):
@@ -88,7 +88,7 @@ setup(
     },
     package_data={'evo2': ['evo2/configs/*.yml']},
     include_package_data=True,
-    python_requires='>=3.11',
+    python_requires='>=3.10',
     license="Apache-2.0",
     description='Genome modeling across all domains of life',
     long_description=readme,

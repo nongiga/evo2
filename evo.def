@@ -1,0 +1,40 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+
+%files
+    . /usr/src/evo2
+
+%post
+    # Install packages exactly like Dockerfile (works in Singularity %post with full permissions)
+    apt-get update && apt-get install -y git python3-pip python3-tomli && rm -rf /var/lib/apt/lists/*
+    
+    mkdir -p /pmglocal/$USER/tmp
+    cd /pmglocal/$USER/tmp
+    python3 -c 'import tomli; \
+                p = tomli.load(open("/usr/src/evo2/vortex/pyproject.toml", "rb"))["project"]; \
+                print("\n".join(p["dependencies"] + p.get("optional-dependencies", {"special": []})["special"]))'\
+    > requirements.txt
+    pip install $(cat requirements.txt | grep ^torch)
+    pip install -r requirements.txt
+    
+    # Install evo2 dependencies directly in base container
+    pip install "setuptools>=60.0.0,<70.0.0" biopython huggingface_hub packaging wheel
+    
+    # Install vortex ops
+    cd /usr/src/evo2/vortex/vortex/ops/attn && MAX_JOBS=32 pip install -v -e . --no-build-isolation
+    
+    # Install vortex package
+    cd /usr/src/evo2/vortex && pip install . --no-deps --no-build-isolation
+    
+    # Install evo2 package
+    cd /usr/src/evo2 && pip install . --no-deps --no-build-isolation
+
+
+%environment
+    export CUDA_HOME=/usr/local/cuda
+    export PATH=/usr/local/cuda/bin:$PATH
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+    export PYTHONPATH=/usr/src/evo2/vortex:/usr/src/evo2:$PYTHONPATH
+
+%runscript
+    exec "$@"

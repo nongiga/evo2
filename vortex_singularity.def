@@ -1,0 +1,33 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+
+%files
+    pyproject.toml /pmglocal/$USER/tmp/pyproject.toml
+    vortex/ops /usr/src/vortex-ops
+
+%post
+    # Install packages exactly like Dockerfile (works in Singularity %post with full permissions)
+    apt-get update && apt-get install -y git python3-pip python3-tomli && rm -rf /var/lib/apt/lists/*
+    
+    mkdir -p /pmglocal/$USER/tmp
+    cd /pmglocal/$USER/tmp
+    python3 -c 'import tomli; \
+                p = tomli.load(open("/pmglocal/$USER/tmp/pyproject.toml", "rb"))["project"]; \
+                print("\n".join(p["dependencies"] + p["optional-dependencies"]["special"]))' \
+    > requirements.txt
+    pip install vortex/
+    pip install $(cat requirements.txt | grep ^torch)
+    pip install -r requirements.txt
+    
+    cd /usr/src/vortex-ops/attn && MAX_JOBS=32 pip install -v -e . --no-build-isolation
+    
+    # Install evo2 dependencies directly in base container
+    pip install biopython huggingface_hub
+
+%environment
+    export CUDA_HOME=/usr/local/cuda
+    export PATH=/usr/local/cuda/bin:$PATH
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
+%runscript
+    exec "$@"
