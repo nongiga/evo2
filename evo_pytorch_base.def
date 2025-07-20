@@ -1,0 +1,23 @@
+Bootstrap: docker
+From: nvcr.io/nvidia/pytorch:25.04-py3
+
+%files
+    . /usr/src/evo2
+
+%post
+    # Install system dependencies
+    apt-get update && apt-get install -y git python3-tomli && rm -rf /var/lib/apt/lists/*
+    
+    # Create temporary directory
+    mkdir -p /pmglocal/$USER/tmp
+    cd /pmglocal/$USER/tmp
+    
+
+
+%environment
+    export CUDA_HOME=/usr/local/cuda
+    export PATH=/usr/local/cuda/bin:$PATH
+    export LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH
+
+%runscript
+    exec "$@" 

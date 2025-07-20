@@ -38,7 +38,7 @@ interleave: True
 # Layer > 0 nn.identity activation
 evo2_style_activations: True
 
-use_fp8_input_projections: True
+use_fp8_input_projections: False
 
 # Legacy options for MP / PP inference
 model_parallel_size: 1
